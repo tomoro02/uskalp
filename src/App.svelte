@@ -5,9 +5,9 @@
   let stylesEta = [ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
      '11', '12', '13', '14', '15', '16', '17', '18' ]
 
-  let stylesDelta = [ '0', '1', '2', '3' ]
+  let stylesDelta = [ '0', '1', '2', '3', '4', '5', '6', '7' ]
 
-  let borders = [ 'Alpha', 'Beta', 'Delta', 'Eta', 'Epsilon', 'Gamma', 'Jota', 'Lambda', 'Theta', 'Zeta' ]
+  let borders = [ 'Alpha', 'Beta', 'Delta', 'Eta', 'Epsilon', 'Gamma', 'Jota', 'Lambda', 'Theta', 'Zeta', 'Omega' ]
 
   let deres = [ 'Bodere', 'Dandere', 'Deredere', 'Kamidere', 'Kuudere', 'Mayadere',
     'Tsundere', 'Yandere', 'Raito', 'Yami', 'Yato' ]
@@ -49,11 +49,19 @@
   function getStyle() {
     switch (selectedBorder) {
       case 'Delta':
-        if (parseInt(selectedStyle) > 3)
+        if (parseInt(selectedStyle) > stylesDelta.length - 1)
+        {
           selectedStyle = '0';
+        }
       case 'Eta':
+        if (parseInt(selectedStyle) > stylesEta.length - 1)
+        {
+          selectedStyle = '0';
+        }
         if (parseInt(selectedStyle) > 0)
+        {
           return selectedStyle;
+        }
       default:
         return "";
     }
@@ -66,6 +74,8 @@
       case 'Gamma':
       case 'Theta':
         return "";
+      case 'Omega':
+        return `/borders/${selectedBorder}/Border${styleUri}.webp`;
       default:
         return `/borders/${selectedBorder}/Border${styleUri}.png`;
     }
@@ -79,6 +89,8 @@
       case 'Eta':
       case 'Lambda':
         return `/borders/${selectedBorder}/BorderBack${styleUri}.png`;
+      case 'Omega':
+        return `/borders/${selectedBorder}/BorderBack${styleUri}.webp`;
       default:
         return "";
     }
