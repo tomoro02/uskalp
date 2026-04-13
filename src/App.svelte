@@ -371,19 +371,7 @@
   .file-input {
     cursor: pointer;
   }
-  .dropzone-text {
-    color: #999;
-    font-size: 14px;
-    pointer-events: none;
-  }
-  .file-name {
-    color: #4CAF50;
-    font-size: 12px;
-    margin-top: 8px;
-    font-weight: bold;
-    pointer-events: none;
-  }
-  
+
   @media (prefers-color-scheme: dark) {
     .dropzone {
       border-color: #555;
@@ -397,12 +385,6 @@
       border-color: #66BB6A;
       background-color: #1b5e20;
       box-shadow: 0 0 10px rgba(102, 187, 106, 0.3);
-    }
-    .dropzone-text {
-      color: #aaa;
-    }
-    .file-name {
-      color: #66BB6A;
     }
   }
   .selector {
