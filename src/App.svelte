@@ -1,70 +1,145 @@
 <script>
 
+  import { onMount } from 'svelte';
   import logo from '/pwlogo.png'
-
-  let stylesEta = [ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
-     '11', '12', '13', '14', '15', '16', '17', '18' ]
-
-  let stylesDelta = [ '0', '1', '2', '3', '4', '5', '6', '7' ]
 
   let borders = [ 'Alpha', 'Beta', 'Delta', 'Eta', 'Epsilon', 'Gamma', 'Jota', 'Lambda', 'Theta', 'Zeta', 'Omega' ]
 
   let deres = [ 'Bodere', 'Dandere', 'Deredere', 'Kamidere', 'Kuudere', 'Mayadere',
     'Tsundere', 'Yandere', 'Raito', 'Yami', 'Yato' ]
 
-  let image = "https://sanakan.pl/i/ss/sUwh3io.png";
-  let customBorder = "";
-  let showStats = false;
-  let localImage = false;
+  let variantsMap = {
+  };
 
-  let selectedBorder = 'Delta';
-  let selectedDere = 'Mayadere';
-  let selectedStyle = '2'
+  async function fetchVariants() {
+    try {
+      const response = await fetch('https://raw.githubusercontent.com/MZKNEK/sanakan/master/src/Extensions/CardExtension.cs');
+      const text = await response.text();
+      const startIndex = text.indexOf('public static int GetCardVariantsCount(this Card card)');
+      if (startIndex !== -1) {
+        const functionText = text.substring(startIndex);
+        const endIndex = functionText.indexOf('}');
+        if (endIndex !== -1) {
+          const functionBody = functionText.substring(0, endIndex + 1);
+          const lines = functionBody.split(/\r?\n/);
+          for (const line of lines) {
+            const match = line.match(/Quality\.(\w+)\s*=>\s*(\d+)/);
+            if (match) {
+              variantsMap = { ...variantsMap, [match[1]]: parseInt(match[2]) };
+            }
+          }
+        }
+      }
+      initDefaults();
+      updateData();
+    } catch (error) {
+      console.error('Error fetching variants:', error);
+    }
+  }
 
-  let fileinput;
+  onMount(fetchVariants);
 
-  function onFileSelected(e) {
-  	let imageFile = e.target.files[0];
-    let reader = new FileReader();
-  	reader.onload = e => {
-      image = e.target.result;
-      localImage = true;
-  	};
-  	reader.readAsDataURL(imageFile);
+  function getVariantsCount(border) {
+    return variantsMap[border] || 0;
   }
 
   function getStyleList() {
     switch (selectedBorder) {
       case 'Delta':
-        return stylesDelta;
+        return Array.from({length: getVariantsCount('Delta') + 1}, (_, i) => i.toString());
       case 'Eta':
-        return stylesEta;
+        return Array.from({length: getVariantsCount('Eta') + 1}, (_, i) => i.toString());
+      case 'Lambda':
+        return Array.from({length: getVariantsCount('Lambda') + 1}, (_, i) => i.toString());
       default:
         return null;
     }
   }
 
-  let styles = getStyleList();
+  let image = "https://sanakan.pl/i/ss/sUwh3io.png";
+  let customBorder = "";
+  let showStats = false;
+  let localImage = false;
+  let dragOver = false;
+
+  let selectedBorder = 'Delta';
+  let selectedDere = 'Mayadere';
+  let selectedStyle = '2'
+  let styles = [];
+
+  let fileinput;
+
+  function processFile(imageFile) {
+    if (!imageFile.type.startsWith('image/')) {
+      alert('Proszę przeciągnąć plik obrazu JPG lub PNG.');
+      return;
+    }
+
+    if (imageFile) {
+      let reader = new FileReader();
+      reader.onload = e => {
+        image = e.target.result;
+        localImage = true;
+      };
+      reader.readAsDataURL(imageFile);
+    }
+  }
+
+  function initDefaults() {
+    selectedBorder = 'Delta';
+    selectedDere = 'Mayadere';
+    selectedStyle = '2';
+    customBorder = "";
+    showStats = false;
+    localImage = false;
+    image = "https://sanakan.pl/i/ss/sUwh3io.png";
+  }
+
+  function onFileSelected(e) {
+    let imageFile = e.target.files[0];
+    processFile(imageFile);
+  }
+
+  function onDragOver(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    dragOver = true;
+  }
+
+  function onDragLeave(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    dragOver = false;
+  }
+
+  function onDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    dragOver = false;
+
+    const imageFile = e.dataTransfer.files[0];
+    if (!imageFile) return;
+
+    const dt = new DataTransfer();
+    dt.items.add(imageFile);
+    fileinput.files = dt.files;
+    processFile(imageFile);
+  }
+
+  $: styles = getStyleList();
 
   function getStyle() {
-    switch (selectedBorder) {
-      case 'Delta':
-        if (parseInt(selectedStyle) > stylesDelta.length - 1)
-        {
-          selectedStyle = '0';
-        }
-      case 'Eta':
-        if (parseInt(selectedStyle) > stylesEta.length - 1)
-        {
-          selectedStyle = '0';
-        }
-        if (parseInt(selectedStyle) > 0)
-        {
-          return selectedStyle;
-        }
-      default:
-        return "";
+    let variantsCount = getVariantsCount(selectedBorder);
+    if (variantsCount === 0) return "";
+
+    let selectedStyleInt = parseInt(selectedStyle);
+    if (selectedStyleInt > variantsCount || selectedStyleInt <= 0)
+    {
+      selectedStyle = '0';
+      return "";
     }
+
+    return selectedStyle;
   }
 
   function getBorder() {
@@ -75,22 +150,22 @@
       case 'Theta':
         return "";
       case 'Omega':
-        return `/borders/${selectedBorder}/Border${styleUri}.webp`;
+        return `https://raw.githubusercontent.com/MZKNEK/sanakan/master/src/Pictures/PW/CG/${selectedBorder}/Border${styleUri}.webp`;
       default:
-        return `/borders/${selectedBorder}/Border${styleUri}.png`;
+        return `https://raw.githubusercontent.com/MZKNEK/sanakan/master/src/Pictures/PW/CG/${selectedBorder}/Border${styleUri}.png`;
     }
   }
 
   function getBackBorder() {
     switch (selectedBorder) {
       case 'Jota':
-          return `/borders/${selectedBorder}/Border/${selectedDere}.png`;
+          return `https://raw.githubusercontent.com/MZKNEK/sanakan/master/src/Pictures/PW/CG/${selectedBorder}/Border/${selectedDere}.png`;
       case 'Delta':
       case 'Eta':
       case 'Lambda':
-        return `/borders/${selectedBorder}/BorderBack${styleUri}.png`;
+        return `https://raw.githubusercontent.com/MZKNEK/sanakan/master/src/Pictures/PW/CG/${selectedBorder}/BorderBack${styleUri}.png`;
       case 'Omega':
-        return `/borders/${selectedBorder}/BorderBack${styleUri}.webp`;
+        return `https://raw.githubusercontent.com/MZKNEK/sanakan/master/src/Pictures/PW/CG/${selectedBorder}/BorderBack${styleUri}.webp`;
       default:
         return "";
     }
@@ -102,9 +177,9 @@
       case 'Epsilon':
       case 'Gamma':
       case 'Theta':
-        return `/borders/${selectedBorder}/Border/${selectedDere}.png`
+        return `https://raw.githubusercontent.com/MZKNEK/sanakan/master/src/Pictures/PW/CG/${selectedBorder}/Border/${selectedDere}.png`
       default:
-        return `/borders/${selectedBorder}/Dere/${selectedDere}.png`;
+        return `https://raw.githubusercontent.com/MZKNEK/sanakan/master/src/Pictures/PW/CG/${selectedBorder}/Dere/${selectedDere}.png`;
     }
   }
 
@@ -116,13 +191,13 @@
       case 'Gamma':
       case 'Jota':
       case 'Theta':
-        return `/borders/${selectedBorder}/Stats/${selectedDere}.png`;
+        return `https://raw.githubusercontent.com/MZKNEK/sanakan/master/src/Pictures/PW/CG/${selectedBorder}/Stats/${selectedDere}.png`;
       case 'Beta':
       case 'Epsilon':
         if (selectedDere === 'Yami' || selectedDere === 'Raito' || selectedDere === 'Yato')
-          return `/borders/${selectedBorder}/Stats/${selectedDere}.png`
+          return `https://raw.githubusercontent.com/MZKNEK/sanakan/master/src/Pictures/PW/CG/${selectedBorder}/Stats/${selectedDere}.png`
       default:
-        return `/borders/${selectedBorder}/Stats${styleUri}.png`;
+        return `https://raw.githubusercontent.com/MZKNEK/sanakan/master/src/Pictures/PW/CG/${selectedBorder}/Stats${styleUri}.png`;
     }
   }
 
@@ -163,9 +238,18 @@
       </select></label>
     {/if}
   </div>
-
   <div class="selector">
-    <label><div class="ltext">Lokalny plik:</div><input type="file" accept=".jpg, .jpeg, .png" on:change={(e)=>onFileSelected(e)} bind:this={fileinput} ></label><br/>
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
+    <div class="dropzone {dragOver ? 'drag-over' : ''}"
+      on:dragover={onDragOver}
+      on:dragleave={onDragLeave}
+      on:drop={onDrop}>
+      <div class="dropzone-content">
+        <div class="ltext-inline">Lokalny plik:</div>
+        <input type="file" class="file-input" accept=".jpg, .jpeg, .png" on:change={(e)=>onFileSelected(e)} bind:this={fileinput} />
+      </div>
+    </div>
+    <br/>
     {#if !localImage}
       <label><div class="ltext">Link do obrazka:</div> <input bind:value={image} /> </label><br/>
     {/if}
@@ -250,6 +334,76 @@
     z-index: 3;
     top: 0px;
     left: 0px;
+  }
+  .dropzone {
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: #f9f9f9;
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+  .dropzone:hover {
+    border-color: #999;
+    background-color: #f0f0f0;
+  }
+  .dropzone.drag-over {
+    border-color: #4CAF50;
+    background-color: #e8f5e9;
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+  }
+  .dropzone-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .ltext-inline {
+    display: inline-block;
+    width: auto;
+    text-align: left;
+  }
+  .file-input {
+    cursor: pointer;
+  }
+  .dropzone-text {
+    color: #999;
+    font-size: 14px;
+    pointer-events: none;
+  }
+  .file-name {
+    color: #4CAF50;
+    font-size: 12px;
+    margin-top: 8px;
+    font-weight: bold;
+    pointer-events: none;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .dropzone {
+      border-color: #555;
+      background-color: #1e1e1e;
+    }
+    .dropzone:hover {
+      border-color: #777;
+      background-color: #2a2a2a;
+    }
+    .dropzone.drag-over {
+      border-color: #66BB6A;
+      background-color: #1b5e20;
+      box-shadow: 0 0 10px rgba(102, 187, 106, 0.3);
+    }
+    .dropzone-text {
+      color: #aaa;
+    }
+    .file-name {
+      color: #66BB6A;
+    }
   }
   .selector {
     width: 475px;
