@@ -427,6 +427,18 @@
             <input type="file" class="file-input" accept=".jpg, .jpeg, .png, .webp" 
               on:change={onFileSelected} bind:this={fileinput} />
           </div>
+           {#if editMode}
+            {#if hasExtraLayer}
+              <div class="link-row">
+                <div class="ltext">Warstwa top:</div>
+                <div class="dropzone {dragOverExtra ? 'drag-over' : ''}"
+                  on:dragover={onExtraDragOver} on:dragleave={onExtraDragLeave} on:drop={onExtraDrop}>
+                  <input type="file" class="file-input" accept=".jpg, .jpeg, .png, .webp"
+                    on:change={(e) => processExtraFile(e.target.files[0])} bind:this={extraFileinput} />
+                </div>
+              </div>
+            {/if}
+           {/if}
         </div>
           {#if !isLocalFile}
           <div class="link-row">
@@ -458,14 +470,6 @@
         </div>
         {#if editMode}
           {#if hasExtraLayer}
-            <div class="link-row">
-              <div class="ltext">Warstwa top:</div>
-              <div class="dropzone {dragOverExtra ? 'drag-over' : ''}"
-                on:dragover={onExtraDragOver} on:dragleave={onExtraDragLeave} on:drop={onExtraDrop}>
-                <input type="file" class="file-input" accept=".jpg, .jpeg, .png, .webp"
-                  on:change={(e) => processExtraFile(e.target.files[0])} bind:this={extraFileinput} />
-              </div>
-            </div>
             {#if extraImage}
               <div class="link-row centered-row">
                 <div class="ltext">Wybierz warstwę:</div>
