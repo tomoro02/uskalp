@@ -1,3 +1,6 @@
+import Pica from 'pica';
+const picaResizer = new Pica();
+
 const createImage = (url) =>
   new Promise((resolve, reject) => {
     const image = new Image()
@@ -80,6 +83,7 @@ export async function getMirroredImg(imageSrc) {
 export async function getCroppedImg(imageSrc, pixelCrop, maskSrc = null) {
   const image = await createImage(imageSrc);
 
+  // Krok 1: wytnij kadr w naturalnej rozdzielczości (bez skalowania)
   const cropCanvas = document.createElement('canvas');
   cropCanvas.width = pixelCrop.width;
   cropCanvas.height = pixelCrop.height;
@@ -91,8 +95,19 @@ export async function getCroppedImg(imageSrc, pixelCrop, maskSrc = null) {
     0, 0, pixelCrop.width, pixelCrop.height
   );
 
-  const targetCanvas = progressiveResize(cropCanvas, 475, 667);
+  // Krok 2: skaluj do 475x667 przez pica (Lanczos + lekkie wyostrzenie)
+  const targetCanvas = document.createElement('canvas');
+  targetCanvas.width = 475;
+  targetCanvas.height = 667;
+  await picaResizer.resize(cropCanvas, targetCanvas, {
+    quality: 3,
+    alpha: true,
+    unsharpAmount: 60,
+    unsharpRadius: 0.6,
+    unsharpThreshold: 0,
+  });
 
+  // Krok 3: nałóż maskę (jeśli jest)
   if (maskSrc) {
     const ctx = targetCanvas.getContext('2d');
     const mask = await createImage(maskSrc);

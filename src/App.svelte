@@ -114,6 +114,7 @@
   }
 
   let image = "https://sanakan.pl/i/ss/sUwh3io.png";
+  let isLocalFile = false;
   let showStats = false;
   let dragOver = false;
 
@@ -124,6 +125,8 @@
   
   let wrapperRef;
   let fileinput;
+  let extraFileinput;
+  let dragOverExtra = false;
 
   function previewCrop(e) {
     pixelCrop = e.detail.pixels;
@@ -168,6 +171,7 @@
   }
 
   function onFileSelected(e) {
+    isLocalFile = true;
     processFile(e.target.files[0]);
   }
 
@@ -188,7 +192,28 @@
     const dt = new DataTransfer();
     dt.items.add(imageFile);
     fileinput.files = dt.files;
+    isLocalFile = true;
     processFile(imageFile);
+  }
+
+  function onExtraDragOver(e) {
+    e.preventDefault();
+    dragOverExtra = true;
+  }
+
+  function onExtraDragLeave() {
+    dragOverExtra = false;
+  }
+
+  function onExtraDrop(e) {
+    e.preventDefault();
+    dragOverExtra = false;
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    extraFileinput.files = dt.files;
+    processExtraFile(file);
   }
 
   function getStyle() {
@@ -403,10 +428,12 @@
               on:change={onFileSelected} bind:this={fileinput} />
           </div>
         </div>
+          {#if !isLocalFile}
           <div class="link-row">
             <div class="ltext">Link do obrazka:</div>
             <input bind:value={image} placeholder="Wklej link do obrazka..." />
           </div>
+          {/if}
 
         <div class="link-row checkbox-row">
           <div class="ltext">Pokaż statystyki:</div>
@@ -418,45 +445,60 @@
           </div>
       </div>
 
-      <button class="zoom-btn" on:click={() => zoomLevel = zoomLevel === 1 ? 2 : 1}>
-        Skala: {zoomLevel * 100}%
-      </button>
-      {#if editMode}
-        <button class="zoom-btn" style="background: #22c55e;" on:click={downloadImage}>
-          Pobierz obrazek
-        </button>
-        {#if hasExtraLayer}
-          <div class="link-row">
-            <div class="ltext">Warstwa top:</div>
-            <input type="file" class="file-input" accept=".jpg, .jpeg, .png, .webp" 
-              on:change={(e) => processExtraFile(e.target.files[0])} />
-          </div>
-          
-          {#if extraImage}
+      <div class="form-container">
+        <div class="link-row btn-row">
+          <button class="btn" on:click={() => zoomLevel = zoomLevel === 1 ? 2 : 1}>
+            Skala: {zoomLevel * 100}%
+          </button>
+          {#if editMode}
+            <button class="btn" style="background: #22c55e;" on:click={downloadImage}>
+              Pobierz obrazek
+            </button>
+          {/if}
+        </div>
+        {#if editMode}
+          {#if hasExtraLayer}
             <div class="link-row">
-              <div class="ltext">Wybierz warstwę:</div>
-              <select bind:value={activeLayer}>
-                <option value="extra">Top</option>
-                <option value="base">Scalp</option>
-                <option value="both">Obie</option>
-              </select>
+              <div class="ltext">Warstwa top:</div>
+              <div class="dropzone {dragOverExtra ? 'drag-over' : ''}"
+                on:dragover={onExtraDragOver} on:dragleave={onExtraDragLeave} on:drop={onExtraDrop}>
+                <input type="file" class="file-input" accept=".jpg, .jpeg, .png, .webp"
+                  on:change={(e) => processExtraFile(e.target.files[0])} bind:this={extraFileinput} />
+              </div>
+            </div>
+            {#if extraImage}
+              <div class="link-row centered-row">
+                <div class="ltext">Wybierz warstwę:</div>
+                <select bind:value={activeLayer}>
+                  <option value="extra">Top</option>
+                  <option value="base">Scalp</option>
+                  <option value="both">Obie</option>
+                </select>
+                <button class="btn btn-small" style="background: #555;" on:click={resetZoom}>
+                  Reset
+                </button>
+              </div>
+            {:else}
+              <div class="link-row btn-row">
+                <button class="btn btn-small" style="background: #555;" on:click={resetZoom}>
+                  Reset
+                </button>
+              </div>
+            {/if}
+          {:else}
+            <div class="link-row btn-row">
+              <button class="btn btn-small" style="background: #555;" on:click={resetZoom}>
+                Reset
+              </button>
             </div>
           {/if}
-        {/if}
-
-        <button class="zoom-btn" style="background: #555;" on:click={resetZoom}>
-          Reset
-        </button>
           <div class="floating-panel">
-            <div class="info-label">
-            SCALP
-            X: {Math.round(crop.x)} | Y: {Math.round(crop.y)} {Math.round(pixelCrop.width)}x{Math.round(pixelCrop.height)}</div>
+            <div class="info-label">SCALP
+              X: {Math.round(crop.x)} | Y: {Math.round(crop.y)} {Math.round(pixelCrop.width)}x{Math.round(pixelCrop.height)}</div>
             {#if hasExtraLayer && extraImage}
-              <div class="info-label">
-              TOP
-              X: {Math.round(extraCrop.x)} | Y: {Math.round(extraCrop.y)} {Math.round(extraPixelCrop.width)}x{Math.round(extraPixelCrop.height)}</div>
+              <div class="info-label">TOP
+                X: {Math.round(extraCrop.x)} | Y: {Math.round(extraCrop.y)} {Math.round(extraPixelCrop.width)}x{Math.round(extraPixelCrop.height)}</div>
             {/if}
-
             <div class="dpad">
               <button on:click={() => moveCrop(0, -1)}>▲</button>
               <button on:click={() => moveCrop(0, 1)}>▼</button>
@@ -464,7 +506,8 @@
               <button on:click={() => moveCrop(1, 0)}>▶</button>
             </div>
           </div>
-      {/if}
+        {/if}
+      </div>
     </div>
 
   <div class="right-panel">
@@ -536,6 +579,7 @@
           
       </div>
     </div>
+  </div>
   </div>
 
 </main>
@@ -645,18 +689,30 @@
     margin-top: 10px;
   }
   
-  .zoom-btn {
-    margin-top: 10px;
+  .btn {
     padding: 10px 20px;
     border: none;
     border-radius: 15px;
     cursor: pointer;
     font-weight: bold;
-	transition: background 0.2s;
+    transition: background 0.2s;
+    width: 160px;
   }
   
-  .zoom-btn:hover {
+  .btn:hover {
     background: #646cff;
+  }
+
+  .btn-row {
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .btn-small {
+    width: auto;
+    padding: 6px 14px;
+    flex-shrink: 0;
   }
 
   .right-panel {
@@ -780,7 +836,7 @@
     .ltext {
       flex: 0 0 auto;
       width: 100%;
-      text-align: left;
+      text-align: center;
     }
 
     .checkbox-row .ltext {
@@ -789,6 +845,20 @@
 
     input:not([type="checkbox"]), .dropzone {
       width: 100% !important;
+    }
+
+    .btn-row {
+      justify-content: center;
+    }
+
+    .form-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .centered-row {
+      align-items: center;
     }
   }
 
