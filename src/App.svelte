@@ -427,25 +427,23 @@
             <input type="file" class="file-input" accept=".jpg, .jpeg, .png, .webp" 
               on:change={onFileSelected} bind:this={fileinput} />
           </div>
-           {#if editMode}
-            {#if hasExtraLayer}
-              <div class="link-row">
-                <div class="ltext">Warstwa top:</div>
-                <div class="dropzone {dragOverExtra ? 'drag-over' : ''}"
-                  on:dragover={onExtraDragOver} on:dragleave={onExtraDragLeave} on:drop={onExtraDrop}>
-                  <input type="file" class="file-input" accept=".jpg, .jpeg, .png, .webp"
-                    on:change={(e) => processExtraFile(e.target.files[0])} bind:this={extraFileinput} />
-                </div>
-              </div>
-            {/if}
-           {/if}
         </div>
-          {#if !isLocalFile}
-          <div class="link-row">
-            <div class="ltext">Link do obrazka:</div>
-            <input bind:value={image} placeholder="Wklej link do obrazka..." />
+        {#if editMode && hasExtraLayer}
+        <div class="link-row">
+          <div class="ltext">Warstwa top:</div>
+          <div class="dropzone {dragOverExtra ? 'drag-over' : ''}"
+            on:dragover={onExtraDragOver} on:dragleave={onExtraDragLeave} on:drop={onExtraDrop}>
+            <input type="file" class="file-input" accept=".jpg, .jpeg, .png, .webp"
+              on:change={(e) => processExtraFile(e.target.files[0])} bind:this={extraFileinput} />
           </div>
-          {/if}
+        </div>
+        {/if}
+        {#if !isLocalFile}
+        <div class="link-row">
+          <div class="ltext">Link do obrazka:</div>
+          <input bind:value={image} placeholder="Wklej link do obrazka..." />
+        </div>
+        {/if}
 
         <div class="link-row checkbox-row">
           <div class="ltext">Pokaż statystyki:</div>
