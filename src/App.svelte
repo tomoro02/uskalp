@@ -658,6 +658,7 @@
           {/if}
           
           {#if editMode}
+            <div class="green-bg" style="-webkit-mask-image: url({currentMaskUrl}); mask-image: url({currentMaskUrl}); -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;"></div>
             <div class="cropper-container" 
                 style="--mask-url: url({currentMaskUrl}); pointer-events: {activeLayer === 'extra' ? 'none' : 'auto'};">
               <Cropper 
@@ -920,6 +921,17 @@
     border: none !important;
     box-shadow: none !important;
     color: transparent !important;
+  }
+  
+  .green-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 475px;
+    height: 667px;
+    background: #00ff00;
+    z-index: 15;
+    pointer-events: none;
   }
 
   .crop-border {
