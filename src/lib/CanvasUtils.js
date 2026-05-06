@@ -102,7 +102,7 @@ export async function getCroppedImg(imageSrc, pixelCrop, maskSrc = null) {
   await picaResizer.resize(cropCanvas, targetCanvas, {
     quality: 3,
     alpha: true,
-    unsharpAmount: 120,
+    unsharpAmount: 150,
     unsharpRadius: 0.4,
     unsharpThreshold: 2,
   });
